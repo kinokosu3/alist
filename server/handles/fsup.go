@@ -1,6 +1,9 @@
 package handles
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"net/url"
 	stdpath "path"
 	"strconv"
@@ -33,6 +36,24 @@ func FsStream(c *gin.Context) {
 		common.ErrorResp(c, err, 400)
 		return
 	}
+	// body 加密
+	var keys = ([]byte)("key_prefix_okok")
+	all, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		fmt.Printf("read all error: %v", err)
+		common.ErrorResp(c, err, 500)
+		return
+	}
+	// 加密
+	for i := range all {
+		all[i] = all[i] ^ keys[i%len(keys)]
+	}
+	//destination, _ := os.OpenFile(time.Now().String()+".jpeg", os.O_CREATE|os.O_WRONLY, 0666)
+	//defer destination.Close()
+	//destination.Write(all)
+
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(all))
+
 	stream := &model.FileStream{
 		Obj: &model.Object{
 			Name:     name,

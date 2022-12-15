@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -95,6 +96,18 @@ func Proxy(w http.ResponseWriter, r *http.Request, link *model.Link, file model.
 			log.Debugln(msg)
 			return errors.New(msg)
 		}
+		//
+		var keys = ([]byte)("key_prefix_okok")
+		all, err := io.ReadAll(res.Body)
+		if err != nil {
+			fmt.Printf("read all error: %v", err)
+			return err
+		}
+		// 加密
+		for i := range all {
+			all[i] = all[i] ^ keys[i%len(keys)]
+		}
+		res.Body = io.NopCloser(bytes.NewBuffer(all))
 		_, err = io.Copy(w, res.Body)
 		if err != nil {
 			return err
